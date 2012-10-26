@@ -1,35 +1,11 @@
 from django.conf.urls.defaults import *
-import os
-import settings
-
-# Uncomment the next two lines to enable the admin:
-from django.contrib import admin
-admin.autodiscover()
 
 urlpatterns = patterns('',
-                       # (r'^accounts/login/$', 'django.contrib.auth.views.login'),
-                       (r'^login/$', 'labgeeksrpg.views.labgeeks_login'),
-                       (r'^logout/$', 'labgeeksrpg.views.labgeeks_logout'),
-                       (r'^inactive/$', 'labgeeksrpg.views.inactive'),
-                       # Example:
-                       # (r'^labgeeksrpg/', include('labgeeksrpg.foo.urls')),
-                       (r'^chronos/', include('labgeeksrpg.chronos.urls')),
-                       (r'^people/', include('labgeeksrpg.people.urls')),
-                       (r'^schedule/', include('labgeeksrpg.schedule.urls')),
-                       (r'^delphi/', include('labgeeksrpg.delphi.urls')),
-                       (r'^pythia/', include('labgeeksrpg.pythia.urls')),
-                       (r'^$', 'labgeeksrpg.views.hello'),
-                       (r'^oracles/', include('labgeeksrpg.sybil.urls')),
-                       # Uncomment the admin/doc line below and add 'django.contrib.admindocs'
-                       # to INSTALLED_APPS to enable admin documentation:
-                       # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-                       # Uncomment the next line to enable the admin:
-                       (r'^admin/', include(admin.site.urls)),
+                       (r'^create_page?/$', 'labgeeksrpg.pythia.views.edit_page'),
+                       (r'^(?P<slug>[-\w]+)/edit/$', 'labgeeksrpg.pythia.views.edit_page'),
+                       (r'^(?P<slug>[-\w]+)/save/$', 'labgeeksrpg.pythia.views.edit_page'),
+                       (r'^(?P<slug>[-\w]+)/$', 'labgeeksrpg.pythia.views.view_page'),
+                       (r'^(?P<slug>[-\w]+)/revisions/$', 'labgeeksrpg.pythia.views.revision_history'),
+                       (r'^(?P<slug>[-\w]+)/select_revision/$', 'labgeeksrpg.pythia.views.select_revision'),
+                       (r'^$', 'labgeeksrpg.pythia.views.pythia_home'),
                        )
-
-# only serve static files through the django server if debug is enabled. Only for development instances.
-if settings.DEBUG:
-    urlpatterns += patterns('',
-                            (r'^uploads/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
-                            )

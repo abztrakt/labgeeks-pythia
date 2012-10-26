@@ -1,141 +1,213 @@
-from django.contrib.auth import authenticate, login, logout
-from django.core.context_processors import csrf
-from django.shortcuts import render_to_response, HttpResponseRedirect
+from labgeeksrpg.pythia.models import Page, RevisionHistory
+from django.shortcuts import render_to_response
+from django.http import HttpResponseRedirect
 from django.template import RequestContext
-from labgeeksrpg.forms import LoginForm
-import datetime
-from labgeeksrpg.labgeeksrpg_config.models import Notification
-from labgeeksrpg.labgeeksrpg_config.forms import NotificationForm
+from django.core.context_processors import csrf
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from datetime import datetime
+import diff_match_patch
+from django.template.defaultfilters import slugify
+from django.utils.html import strip_tags
+from labgeeksrpg.sybil.models import Tag
+from itertools import chain
 
 
-def hello(request):
-    """ The site dashboard.
-    """
-    #when a user is logged-in correctly
-    if request.user.is_authenticated():
-        locations = request.user.location_set.all()
-        shifts = request.user.shift_set.all()
-        clockin_time = 0
-        if locations and shifts:
-            clockin_time = shifts[len(shifts) - 1].intime
-
-        now = datetime.datetime.now()
-
-        notifications = Notification.objects.all()
-        events = []
-        alerts = []
-        for noti in notifications:
-            if noti.due_date:
-                if now.date() - noti.due_date.date() >= datetime.timedelta(days=1):
-                    noti.archived = True
-                elif not noti.due_date - now > datetime.timedelta(days=7) and not noti.archived:
-                    events.append(noti)
-            else:
-                if not noti.archived:
-                    alerts.append(noti)
-        events.sort(key=lambda x: x.due_date)
-
-        c = {}
-        c.update(csrf(request))
-
-        can_Add = False
-        if request.user.has_perm('labgeeksrpg_config.add_notification'):
-            can_Add = True
-
-        form_is_valid = True
-        if request.method == 'POST':
-            archive_ids = request.POST.getlist('pk')
-            if archive_ids:
-                for archive_id in archive_ids:
-                    notif = Notification.objects.get(pk=archive_id)
-                    notif.archived = True
-                    notif.save()
-                return HttpResponseRedirect('/')
-
-            form = NotificationForm(request.POST)
-            if form.is_valid():
-                form_is_valid = True
-                notification = form.save(commit=False)
-                notification.user = request.user
-                if notification.due_date:
-                    if now.date() - notification.due_date.date() >= datetime.timedelta(days=1):
-                        notification.archived = True
-                notification.save()
-                return HttpResponseRedirect('/')
-            else:
-                form_is_valid = False
-        else:
-            form = NotificationForm()
-
-        workshifts = request.user.workshift_set.all()
-        today_past_shifts = []
-        today_future_shifts = []
-        for shift in workshifts:
-            in_time = shift.scheduled_in
-            out_time = shift.scheduled_out
-            if (in_time.year == now.year and in_time.month == now.month and in_time.day == now.day):
-                if now - out_time > datetime.timedelta(seconds=1):
-                    today_past_shifts.append(shift)
-                else:
-                    today_future_shifts.append(shift)
-        args = {
-            'request': request,
-            'locations': locations,
-            'clockin_time': clockin_time,
-            'today_past_shifts': today_past_shifts,
-            'today_future_shifts': today_future_shifts,
-            'events': events,
-            'alerts': alerts,
-            'can_Add': can_Add,
-        }
-        return render_to_response('dashboard.html', locals(), context_instance=RequestContext(request))
-    else:
-        return render_to_response('hello.html', locals())
+@login_required
+def view_page(request, slug):
+    can_edit_page = False
+    if request.user.has_perm('pythia.change_page'):
+        can_edit_page = True
+    try:
+        page = Page.objects.get(slug=slug)
+        page_name = page.name
+        content = page.content
+        tags = page.tags.all()
+    except Page.DoesNotExist:
+        return HttpResponseRedirect('/pythia/')
+    if page.times_viewed is None:
+        page.times_viewed = 0
+    page.times_viewed = page.times_viewed + 1
+    try:
+        REVISIONS = RevisionHistory.objects.filter(page=page).order_by('date')
+        last_revision = REVISIONS[len(REVISIONS) - 1]
+    except:
+        last_revision = None
+    return render_to_response("view.html", locals())
 
 
-def labgeeks_login(request):
-    """ Login a user. Called by the @login_required decorator.
-    """
-
-    # Get a token to protect from cross-site request forgery
+@login_required
+def edit_page(request, slug=None):
+    page_exists = False
+    create_page = False
+    page_saved = False
+    if not slug:
+        create_page = True
+    try:
+        page = Page.objects.get(slug=slug)
+        content = page.content
+        page_name = page.name
+        revision_message = ''
+        current_tags = page.tags.all()
+        if not request.user.has_perm('pythia.change_page'):
+            return render_to_response('how_are_you_here.html', {'request': request, })
+        if create_page:
+            page_exists = True
+    except Page.DoesNotExist:
+        content = ""
+        page = None
+        revision_message = 'initial page creation'
+        if not request.user.has_perm('pythia.add_page'):
+            return render_to_response('how_are_you_here.html', {'request': request, })
+    user = request.user
+    tags = Tag.objects.all()
     c = {}
     c.update(csrf(request))
-    if request.user.is_authenticated():
-        try:
-            return HttpResponseRedirect(request.GET['next'])
-        except:
-            return HttpResponseRedirect('/')
-    elif request.method == 'POST':
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            username = request.POST['username']
-            password = request.POST['password']
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                if user.is_active:
-                    login(request, user)
-                    try:
-                        return HttpResponseRedirect(request.GET['next'])
-                    except:
-                        #Redirects to the dashboard.
-                        return HttpResponseRedirect('/')
-                else:
-                    # Return a disabled account error
-                    return HttpResponseRedirect('/inactive/')
+    if request.method == "POST":
+        posttags = request.POST.getlist('tags')
+        tags = []
+        for posttag in posttags:
+            if posttag != '':
+                tags.append(Tag.objects.get_or_create(name=posttag))
+        content = request.POST["content"]
+        content = strip_tags(content)
+        notes = request.POST["notes"]
+        notes = strip_tags(notes)
+        page_name = request.POST['page_name']
+        page_name = strip_tags(page_name)
+        slug = slugify(page_name)
+        if slug == '':
+            return render_to_response('at_least_try.html', {'request': request, })
+        if page:
+            if (page.content != content) or (page.name != page_name):
+                page.content = content
+                page.tags.clear()
+                for tag in tags:
+                    page.tags.add(tag[0])
+                page.name = strip_tags(page_name)
+                page.slug = slug
+                page.save()
+                page_saved = True
+        else:
+            page = Page(name=page_name, slug=slug, content=content, date=datetime.now(), author=user)
+            page.save()
+            page_saved = True
+            for tag in tags:
+                page.tags.add(tag[0])
+            page.save()
+        if page_saved:
+            revision = RevisionHistory.objects.create(page=page, user=user, after=content, date=datetime.now())
+            revision.notes = strip_tags(notes)
+            revision.save()
+        if page.times_viewed is None:
+            page.times_viewed = 0
+        else:
+            '''in the course of editing the page, you view it twice.  This
+            little bit of logic rights that wrong'''
+            page.times_viewed = page.times_viewed - 1
+        return HttpResponseRedirect("/pythia/" + slug + "/")
+    return render_to_response("edit.html", locals(), context_instance=RequestContext(request))
+
+
+@login_required
+def pythia_home(request):
+    requested_tags = request.GET.getlist('tag')
+    PAGES = []
+    tags = Tag.objects.all()
+    if requested_tags:
+        for tag in requested_tags:
+            tag_object = Tag.objects.get(name=tag)
+            tagged_pages = Page.objects.filter(tags=tag_object)
+            for tagged_page in tagged_pages:
+                if tagged_page not in PAGES:
+                    PAGES.append(tagged_page)
     else:
-        form = LoginForm()
+        try:
+            PAGES = Page.objects.all()
+        except:
+            PAGES = None
+    pages = []
+    for PAGE in PAGES:
+        page = {
+            'name': PAGE.name,
+            'slug': PAGE.slug,
+            'preview': PAGE.content[:200],
+        }
+        pages.append(page)
+    can_add_page = request.user.has_perm('pythia.add_page')
+    return render_to_response('home.html', {'tags': tags, 'requested_tags': requested_tags, 'pages': pages, 'request': request, 'can_add_page': can_add_page, })
 
-    return render_to_response('login.html', locals(), context_instance=RequestContext(request))
+
+@login_required
+def revision_history(request, slug):
+    can_edit_revisions = request.user.has_perm('pythia.change_revisionhistory')
+    c = {}
+    c.update(csrf(request))
+    try:
+        page = Page.objects.get(slug=slug)
+    except Page.DoesNotExist:
+        page = None
+    revision_history = []
+    dmp = diff_match_patch.diff_match_patch()
+    last_rev = ''
+    if page:
+        revisions = RevisionHistory.objects.filter(page=page).order_by('date')
+        for revision in revisions:
+            diff = dmp.diff_main(last_rev, revision.after)
+            dmp.diff_cleanupSemantic(diff)
+            diff_html = dmp.diff_prettyHtml(diff)
+            diff_markdown = diff_html.replace("#ffe6e6;", "red")
+            diff_markdown = diff_markdown.replace("#e6ffe6;", "green")
+            holder = {
+                'date': revision.date,
+                'notes': revision.notes,
+                'user': revision.user,
+                'diff': diff_markdown,
+                'revised_text': revision.after,
+                'id': revision.id,
+            }
+            revision_history.append(holder)
+            last_rev = revision.after
+    revision_history_ordered = []
+    for revision in reversed(revision_history):
+        revision_history_ordered.append(revision)
+    current_revision = revision_history_ordered.pop(0)
+    args = {
+        'current_revision': current_revision,
+        'name': page.name,
+        'slug': slug,
+        'revision_history': revision_history_ordered,
+        'request': request,
+        'can_edit_revisions': can_edit_revisions,
+    }
+    return render_to_response('revisions.html', args, context_instance=RequestContext(request))
 
 
-def labgeeks_logout(request):
-    """ Manually log a user out.
-    """
-    logout(request)
-    return HttpResponseRedirect('/')
-
-
-def inactive(request):
-    """ Return if a user's account has been disabled.
-    """
-    return render_to_response('inactive.html', locals())
+@login_required
+def select_revision(request, slug):
+    if not request.user.has_perm('pythia.change_revisionhistory'):
+        return render_to_response('how_are_you_here.html', {'request': request, })
+    try:
+        page = Page.objects.get(slug=slug)
+    except Page.DoesNotExist:
+        return render_to_response('how_are_you_here.html', {'request': request, })
+    c = {}
+    c.update(csrf(request))
+    if request.method == "POST":
+        revision_id = request.POST["id"]
+        revision_object = RevisionHistory.objects.get(id=revision_id)
+        revision = {
+            'user': revision_object.user,
+            'content': revision_object.after,
+            'notes': revision_object.notes,
+            'date': revision_object.date,
+        }
+    else:
+        revision = None
+    args = {
+        'page_name': page.name,
+        'slug': slug,
+        'revision': revision,
+        'request': request,
+    }
+    return render_to_response('select_revision.html', args, context_instance=RequestContext(request))
