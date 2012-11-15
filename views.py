@@ -1,4 +1,4 @@
-from labgeeksrpg.pythia.models import Page, RevisionHistory
+from labgeeks_pythia.models import Page, RevisionHistory
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.template import RequestContext
@@ -9,7 +9,7 @@ from datetime import datetime
 import diff_match_patch
 from django.template.defaultfilters import slugify
 from django.utils.html import strip_tags
-from labgeeksrpg.sybil.models import Tag
+from labgeeks_sybil.models import Tag
 from itertools import chain
 
 

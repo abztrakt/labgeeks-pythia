@@ -10,17 +10,17 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Adding M2M table for field tags on 'Page'
-        db.create_table('pythia_page_tags', (
+        db.create_table('labgeeks_pythia_page_tags', (
             ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('page', models.ForeignKey(orm['pythia.page'], null=False)),
-            ('tag', models.ForeignKey(orm['sybil.tag'], null=False))
+            ('page', models.ForeignKey(orm['labgeeks_pythia.page'], null=False)),
+            ('tag', models.ForeignKey(orm['labgeeks_sybil.tag'], null=False))
         ))
-        db.create_unique('pythia_page_tags', ['page_id', 'tag_id'])
+        db.create_unique('labgeeks_pythia_page_tags', ['page_id', 'tag_id'])
 
     def backwards(self, orm):
 
         # Removing M2M table for field tags on 'Page'
-        db.delete_table('pythia_page_tags')
+        db.delete_table('labgeeks_pythia_page_tags')
 
     models = {
         'auth.group': {
@@ -59,7 +59,7 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        'pythia.page': {
+        'labgeeks_pythia.page': {
             'Meta': {'object_name': 'Page'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'content': ('django.db.models.fields.TextField', [], {}),
@@ -67,19 +67,19 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': "'50'"}),
             'slug': ('django.db.models.fields.SlugField', [], {'max_length': "'50'", 'unique': 'True', 'null': 'True', 'db_index': 'True'}),
-            'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['sybil.Tag']", 'null': 'True', 'symmetrical': 'False'}),
+            'tags': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['labgeeks_sybil.Tag']", 'null': 'True', 'symmetrical': 'False'}),
             'times_viewed': ('django.db.models.fields.IntegerField', [], {'default': '0', 'null': 'True'})
         },
-        'pythia.revisionhistory': {
+        'labgeeks_pythia.revisionhistory': {
             'Meta': {'object_name': 'RevisionHistory'},
             'after': ('django.db.models.fields.TextField', [], {}),
             'date': ('django.db.models.fields.DateField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'notes': ('django.db.models.fields.CharField', [], {'max_length': "'260'", 'null': 'True'}),
-            'page': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['pythia.Page']"}),
+            'page': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['labgeeks_pythia.Page']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
-        'sybil.tag': {
+        'labgeeks_sybil.tag': {
             'Meta': {'object_name': 'Tag'},
             'description': ('django.db.models.fields.TextField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -87,4 +87,4 @@ class Migration(SchemaMigration):
         }
     }
 
-    complete_apps = ['pythia']
+    complete_apps = ['labgeeks_pythia']

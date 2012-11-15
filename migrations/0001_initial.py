@@ -9,7 +9,7 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding model 'Page'
-        db.create_table('pythia_page', (
+        db.create_table('labgeeks_pythia_page', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length='50')),
             ('slug', self.gf('django.db.models.fields.SlugField')(max_length='50', unique=True, null=True, db_index=True)),
@@ -17,25 +17,25 @@ class Migration(SchemaMigration):
             ('author', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True, blank=True)),
             ('date', self.gf('django.db.models.fields.DateField')(null=True)),
         ))
-        db.send_create_signal('pythia', ['Page'])
+        db.send_create_signal('labgeeks_pythia', ['Page'])
 
         # Adding model 'RevisionHistory'
-        db.create_table('pythia_revisionhistory', (
+        db.create_table('labgeeks_pythia_revisionhistory', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('after', self.gf('django.db.models.fields.TextField')()),
-            ('page', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['pythia.Page'])),
+            ('page', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['labgeeks_pythia.Page'])),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
             ('date', self.gf('django.db.models.fields.DateField')()),
             ('notes', self.gf('django.db.models.fields.CharField')(max_length='260', null=True)),
         ))
-        db.send_create_signal('pythia', ['RevisionHistory'])
+        db.send_create_signal('labgeeks_pythia', ['RevisionHistory'])
 
     def backwards(self, orm):
         # Deleting model 'Page'
-        db.delete_table('pythia_page')
+        db.delete_table('labgeeks_pythia_page')
 
         # Deleting model 'RevisionHistory'
-        db.delete_table('pythia_revisionhistory')
+        db.delete_table('labgeeks_pythia_revisionhistory')
 
     models = {
         'auth.group': {
@@ -74,7 +74,7 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        'pythia.page': {
+        'labgeeks_pythia.page': {
             'Meta': {'object_name': 'Page'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'content': ('django.db.models.fields.TextField', [], {}),
@@ -83,15 +83,15 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': "'50'"}),
             'slug': ('django.db.models.fields.SlugField', [], {'max_length': "'50'", 'unique': 'True', 'null': 'True', 'db_index': 'True'})
         },
-        'pythia.revisionhistory': {
+        'labgeeks_pythia.revisionhistory': {
             'Meta': {'object_name': 'RevisionHistory'},
             'after': ('django.db.models.fields.TextField', [], {}),
             'date': ('django.db.models.fields.DateField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'notes': ('django.db.models.fields.CharField', [], {'max_length': "'260'", 'null': 'True'}),
-            'page': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['pythia.Page']"}),
+            'page': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['labgeeks_pythia.Page']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         }
     }
 
-    complete_apps = ['pythia']
+    complete_apps = ['labgeeks_pythia']

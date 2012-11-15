@@ -10,12 +10,12 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Adding field 'Page.times_viewed'
-        db.add_column('pythia_page', 'times_viewed', self.gf('django.db.models.fields.IntegerField')(default=0, null=True), keep_default=False)
+        db.add_column('labgeeks_pythia_page', 'times_viewed', self.gf('django.db.models.fields.IntegerField')(default=0, null=True), keep_default=False)
 
     def backwards(self, orm):
 
         # Deleting field 'Page.times_viewed'
-        db.delete_column('pythia_page', 'times_viewed')
+        db.delete_column('labgeeks_pythia_page', 'times_viewed')
 
     models = {
         'auth.group': {
@@ -54,7 +54,7 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        'pythia.page': {
+        'labgeeks_pythia.page': {
             'Meta': {'object_name': 'Page'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'content': ('django.db.models.fields.TextField', [], {}),
@@ -64,15 +64,15 @@ class Migration(SchemaMigration):
             'slug': ('django.db.models.fields.SlugField', [], {'max_length': "'50'", 'unique': 'True', 'null': 'True', 'db_index': 'True'}),
             'times_viewed': ('django.db.models.fields.IntegerField', [], {'default': '0', 'null': 'True'})
         },
-        'pythia.revisionhistory': {
+        'labgeeks_pythia.revisionhistory': {
             'Meta': {'object_name': 'RevisionHistory'},
             'after': ('django.db.models.fields.TextField', [], {}),
             'date': ('django.db.models.fields.DateField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'notes': ('django.db.models.fields.CharField', [], {'max_length': "'260'", 'null': 'True'}),
-            'page': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['pythia.Page']"}),
+            'page': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['labgeeks_pythia.Page']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         }
     }
 
-    complete_apps = ['pythia']
+    complete_apps = ['labgeeks_pythia']
