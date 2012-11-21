@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.models import ContentType
-from pythia.models import *
+from labgeeks_pythia.models import *
 import datetime
 import pdb
 

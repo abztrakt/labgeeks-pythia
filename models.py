@@ -11,7 +11,7 @@ class Page(models.Model):
     author = models.ForeignKey(User, null=True, blank=True)
     date = models.DateField(null=True)
     times_viewed = models.IntegerField(null=True, default=0)
-    tags = models.ManyToManyField('labgeeks_sybil.Tag', null=True)
+    tags = models.ManyToManyField('labgeeks_sybil.Tag', null=True, blank=True)
 
     def __unicode__(self):
         return self.name
@@ -19,8 +19,8 @@ class Page(models.Model):
 
 class RevisionHistory(models.Model):
     after = models.TextField()
-    page = models.ForeignKey(Page)
-    user = models.ForeignKey(User)
+    page = models.ForeignKey(Page, null=True, blank=True)
+    user = models.ForeignKey(User, null=True, blank=True)
     date = models.DateField()
     notes = models.CharField(null=True, max_length='260')
 
