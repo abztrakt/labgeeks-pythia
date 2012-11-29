@@ -16,7 +16,7 @@ from itertools import chain
 @login_required
 def view_page(request, slug):
     can_edit_page = False
-    if request.user.has_perm('pythia.change_page'):
+    if request.user.has_perm('labgeeks_pythia.change_page'):
         can_edit_page = True
     try:
         page = Page.objects.get(slug=slug)
@@ -49,7 +49,7 @@ def edit_page(request, slug=None):
         page_name = page.name
         revision_message = ''
         current_tags = page.tags.all()
-        if not request.user.has_perm('pythia.change_page'):
+        if not request.user.has_perm('labgeeks_pythia.change_page'):
             return render_to_response('how_are_you_here.html', {'request': request, })
         if create_page:
             page_exists = True
@@ -57,7 +57,7 @@ def edit_page(request, slug=None):
         content = ""
         page = None
         revision_message = 'initial page creation'
-        if not request.user.has_perm('pythia.add_page'):
+        if not request.user.has_perm('labgeeks_pythia.add_page'):
             return render_to_response('how_are_you_here.html', {'request': request, })
     user = request.user
     tags = Tag.objects.all()
@@ -134,13 +134,13 @@ def pythia_home(request):
             'preview': PAGE.content[:200],
         }
         pages.append(page)
-    can_add_page = request.user.has_perm('pythia.add_page')
+    can_add_page = request.user.has_perm('labgeeks_pythia.add_page')
     return render_to_response('home.html', {'tags': tags, 'requested_tags': requested_tags, 'pages': pages, 'request': request, 'can_add_page': can_add_page, })
 
 
 @login_required
 def revision_history(request, slug):
-    can_edit_revisions = request.user.has_perm('pythia.change_revisionhistory')
+    can_edit_revisions = request.user.has_perm('labgeeks_pythia.change_revisionhistory')
     c = {}
     c.update(csrf(request))
     try:
@@ -185,7 +185,7 @@ def revision_history(request, slug):
 
 @login_required
 def select_revision(request, slug):
-    if not request.user.has_perm('pythia.change_revisionhistory'):
+    if not request.user.has_perm('labgeeks_pythia.change_revisionhistory'):
         return render_to_response('how_are_you_here.html', {'request': request, })
     try:
         page = Page.objects.get(slug=slug)

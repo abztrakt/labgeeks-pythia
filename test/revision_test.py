@@ -43,20 +43,22 @@ class RevisionHistoryTestCase(TestCase):
         self.assertContains(resp, 'This is a full page.')  # testing to see if page changed
         revisions = RevisionHistory.objects.filter(page=hello)
         self.assertEqual(len(revisions), 2)
-        resp = client.post('/pythia/hello/select_revision/', {'id': 1})
+        rev1id = revisions[0].id
+        rev2id = revisions[1].id
+        resp = client.post('/pythia/hello/select_revision/', {'id': rev1id})
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'empty')  # revision is properly selected
-        revision = RevisionHistory.objects.get(id=1)
+        revision = RevisionHistory.objects.get(id=rev1id)
         resp = client.post('/pythia/hello/edit/', {'content': revision.after, 'page_name': 'hello', 'notes': 'test rollback'})
         self.assertEqual(resp.status_code, 302)
         resp = client.get('/pythia/hello/')
         self.assertContains(resp, 'empty')  # revision is properly applied
         revisions = RevisionHistory.objects.filter(page=hello)
         self.assertEqual(len(revisions), 3)  # RevisionHistory object created
-        resp = client.post('/pythia/hello/select_revision/', {'id': 1})
+        resp = client.post('/pythia/hello/select_revision/', {'id': rev1id})
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'empty')  # revision is properly selected
-        revision = RevisionHistory.objects.get(id=1)
+        revision = RevisionHistory.objects.get(id=rev1id)
         resp = client.post('/pythia/hello/edit/', {'content': revision.after, 'page_name': 'hello', 'notes': 'test rollback'})
         self.assertEqual(resp.status_code, 302)
         resp = client.get('/pythia/hello/')
