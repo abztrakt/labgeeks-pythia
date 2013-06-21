@@ -1,0 +1,5 @@
+setuptools
+labgeeks-sybil
+South==0.7.3
+Markdown==2.2.0
+diff-match-patch==20120106
