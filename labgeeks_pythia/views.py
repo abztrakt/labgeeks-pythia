@@ -33,7 +33,8 @@ def view_page(request, slug):
         last_revision = REVISIONS[len(REVISIONS) - 1]
     except:
         last_revision = None
-    return render_to_response("view.html", locals())
+    params = {'request': request, 'page_name': page_name, 'tags': tags, 'can_edit_page': can_edit_page, 'last_version': last_version,}
+    return render_to_response("view.html", params)
 
 
 @login_required
@@ -41,6 +42,8 @@ def edit_page(request, slug=None):
     page_exists = False
     create_page = False
     page_saved = False
+
+    params = {'request': request,}
     if not slug:
         create_page = True
     try:
@@ -49,6 +52,8 @@ def edit_page(request, slug=None):
         page_name = page.name
         revision_message = ''
         current_tags = page.tags.all()
+        params['page_name'] = page_name
+        params['current_tags'] = current_page
         if not request.user.has_perm('labgeeks_pythia.change_page'):
             return render_to_response('how_are_you_here.html', {'request': request, })
         if create_page:
@@ -75,6 +80,7 @@ def edit_page(request, slug=None):
         notes = strip_tags(notes)
         page_name = request.POST['page_name']
         page_name = strip_tags(page_name)
+        params['page_name'] = page_name
         slug = slugify(page_name)
         if slug == '':
             return render_to_response('at_least_try.html', {'request': request, })
@@ -106,7 +112,13 @@ def edit_page(request, slug=None):
             little bit of logic rights that wrong'''
             page.times_viewed = page.times_viewed - 1
         return HttpResponseRedirect("/pythia/" + slug + "/")
-    return render_to_response("edit.html", locals(), context_instance=RequestContext(request))
+    params['page_exists'] = page_exists
+    params['create_page'] = create_page
+    params['slug'] = slug
+    params['content'] = content
+    params['tags'] = tags
+    params['revision_message'] = revision_message
+    return render_to_response("edit.html", params, context_instance=RequestContext(request))
 
 
 @login_required
